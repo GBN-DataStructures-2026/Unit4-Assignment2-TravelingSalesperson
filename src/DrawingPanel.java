@@ -940,7 +940,7 @@ public class DrawingPanel extends FileFilter
     // initializes DrawingPanel's menu bar items
     private void setupMenuBar() {
         // abort compare if we're running as an applet or in a secure environment
-        boolean secure = (System.getSecurityManager() != null);
+        boolean secure = false;
         
         JMenuItem saveAs = new JMenuItem("Save As...", 'A');
         saveAs.addActionListener(this);
