@@ -24,29 +24,38 @@ Instead, computer scientists use **heuristics**—fast approximation strategies 
 
 ---
 
-## 2. Tour Insertion Methods & Heuristics
+## 2. Inner Classes & Tour Insertion Heuristics
 
-You will represent a tour as a **circular singly-linked list** of private inner `ListNode` objects inside `Tour.java`. Each node stores a `Point` (`data`) and a reference to the next node (`next`). You will implement three ways to add a `Point` to the tour:
+### Working with a Private Inner Class (`ListNode`)
+Inside `Tour.java`, you will see a **`private class ListNode`** defined inside the `Tour` class. If this is your first time working with an **inner class**, think of it like a `private` helper method—it is a helper class that belongs exclusively to `Tour` and cannot be seen or used by outside classes like `TSPClientDriver`.
 
-### A. In-Order Insertion (`add(Point p)`) — *Baseline*
+Because `ListNode` is a member of `Tour`, **`Tour` has direct access to `ListNode`'s private instance variables (`data` and `next`)**. You do **not** need getter or setter methods (`getData()`, `setNext()`, etc.) inside `Tour`—you can read and update `curr.data` and `curr.next` directly.
+
+---
+
+### Insertion Methods & Heuristics
+You will implement three ways to build a `Tour` one `Point` at a time:
+
+#### A. In-Order Insertion (`add(Point p)`) — *Baseline*
 Appends each new point `p` to the end of the tour in the exact order it appears in the input file (immediately before `front`). This baseline method verifies that your circular linked list structure, traversal, and drawing logic work properly.
 
-### B. Nearest-Neighbor Heuristic (`insertNearest(Point p)`) — *Greedy Heuristic 1*
+#### B. Nearest-Neighbor Heuristic (`insertNearest(Point p)`) — *Greedy Heuristic 1*
 Read the next point `p`, find the existing point in the tour that is **closest** to `p`, and insert `p` immediately **after** that node.
 * **Tie-breaking:** If multiple points tie for the closest distance, insert `p` after the **first** such point encountered when traversing from `front` (use `<`, not `<=`).
 
-### C. Smallest-Increase Heuristic (`insertSmallest(Point p)`) — *Greedy Heuristic 2*
-Read the next point `p` and evaluate inserting it along every existing edge `(curr, curr.next)` in the tour. Insert `p` after the node `curr` where adding `p` causes the **smallest net increase ($\Delta$)** in total tour distance:
-
-$$\Delta = \text{dist}(\text{curr}, p) + \text{dist}(p, \text{curr.next}) - \text{dist}(\text{curr}, \text{curr.next})$$
-
-* **Tie-breaking:** If multiple edges yield the exact same minimum increase, insert `p` after the **first** such node encountered from `front` (use `<`, not `<=`).
+#### C. Smallest-Increase Heuristic (`insertSmallest(Point p)`) — *Greedy Heuristic 2*
+Read the next point `p`, and insert it into the current tour immediately **after** the point where adding `p` results in the **least possible increase** in total tour length.
+* **Tie-breaking:** If multiple insertion positions yield the exact same minimum increase in tour distance, insert `p` after the **first** such point encountered when traversing from `front` (use `<`, not `<=`).
 
 ---
 
 ## 3. Circular Linked List Structure
 
-Each `Tour` maintains a reference `front` to the first `ListNode` in a circular chain:
+When we previously built circular linked lists, we maintained a pointer to the `rear` node so we would have $O(1)$ access to both the rear (`rear`) and the front (`rear.next`) of the list. 
+
+In this project, we only maintain a **`front`** pointer pointing to the first node in the tour:
+* Every tour begins at the first point read from the file (`front`), and both greedy heuristics require scanning through the tour from `front` anyway—so we never need $O(1)$ direct access to the rear of the list.
+* Because the last node's `next` reference points back to `front`, traversing the cycle naturally wraps back to the starting point when computing `distance()` and `draw(Graphics g)`.
 
 ```mermaid
 flowchart LR
@@ -56,22 +65,6 @@ flowchart LR
     N2 --> N3["Node 3<br/>(86.45, 236.3)"]
     N3 --> N4["Node 4<br/>(187.9, 91.2)"]
     N4 -. "closes cycle" .-> N0
-```
-
-### Splicing a New Node After `bestNode`
-To insert a new `ListNode` after `bestNode` in $O(1)$ pointer operations:
-
-```mermaid
-flowchart LR
-    A["bestNode"] -. "1. newNode.next = bestNode.next" .-> B["oldNext"]
-    A == "2. bestNode.next = newNode" ==> N["newNode (p)"]
-    N == "points to" ==> B
-```
-
-```java
-ListNode newNode = new ListNode(p);
-newNode.next = bestNode.next;
-bestNode.next = newNode;
 ```
 
 ---
@@ -106,7 +99,7 @@ Your `Tour` class must implement all methods defined in `TourInterface`:
    * Return `0.0` if the tour has fewer than 2 points.
    * Sum `curr.data.distanceTo(curr.next.data)` around the entire cycle, including the final edge back to `front`.
 6. **Implement `insertNearest(Point p)` and `insertSmallest(Point p)`:**
-   * **Performance Warning ($O(N^2)$ vs. $O(N^3)$):** In `insertSmallest`, do **not** temporarily insert `p` and call `this.distance()` inside your loop—that produces an $O(N^3)$ algorithm that will stall on large datasets. Compute $\Delta = d(\text{curr}, p) + d(p, \text{curr.next}) - d(\text{curr}, \text{curr.next})$ in $O(1)$ time per edge.
+   * **Careful on Large Datasets:** When you run `insertSmallest` on a very large dataset (more than 10,000 points), it can take a very long time. If it takes an unusually long time to finish, you likely have an $O(N^3)$ algorithm. Think carefully about how you can calculate the change in tour length without recomputing the entire tour each time so your overall build time drops to $O(N^2)$.
 
 ---
 
@@ -130,19 +123,19 @@ Run `TSPClientDriver.main()` in VS Code. The tester enforces a **strict gate**:
 
 ---
 
-### Phase 2: Advancing to `usa13509.txt` and `mona-1000.txt`
+### Phase 2: Advancing to `usa13509.txt` and `mona-100k.txt`
 
-Before running the USA map (`usa13509.txt`) or Mona Lisa (`mona-1000.txt`), make **all three** adjustments below:
+Before running the USA map (`usa13509.txt`) or Mona Lisa (`mona-100k.txt`), make **all three** adjustments below:
 
-1. **Shrink the `fillOval` Circle Size (`Point.java`):**
-   * By default, `g.fillOval(..., 5, 5)` draws 5×5 pixel circles. While 5×5 dots are clear on `tsp5.txt` and `tsp1000.txt`, they are **too large** for dense point clouds and will obscure the USA map and Mona Lisa picture.
-   * Change the width and height in `g.fillOval(...)` from `5, 5` to **`2, 2`** (or **`1, 1`**) before running Phase 2.
+1. **Shrink the `fillOval` Size & Adjust Coordinates (`Point.java`):**
+   * By default, `Point.draw()` uses `g.fillOval((int) x - 2, (int) y - 2, 5, 5)`, which draws 5×5 pixel circles centered at `(x, y)`. While 5×5 dots work well on `tsp5.txt` and `tsp1000.txt`, they are **too large** for dense point clouds and will obscure the USA map and Mona Lisa picture.
+   * Change the width and height from `5, 5` to **`1, 1`** (or **`2, 2`**), **and** update the location arguments from `(int) x - 2, (int) y - 2` to **`(int) x, (int) y`** so the smaller dots sit directly on the vertices.
 2. **Comment Out the First Two Heuristics (`TSPClientDriver.java`):**
-   * Comment out `add` and `insertNearest` so that **only `insertSmallest`** runs for `usa13509.txt` and `mona-1000.txt`.
-3. **Use Only `mona-1000.txt`:**
-   * Ignore all other Mona Lisa datasets—only run `usa13509.txt` and `mona-1000.txt`.
+   * Comment out `add` and `insertNearest` so that **only `insertSmallest`** runs for `usa13509.txt` and `mona-100k.txt`.
+3. **Use Only `mona-100k.txt`:**
+   * Ignore `mona-20k.txt` and `mona-50k.txt`—only run `usa13509.txt` and `mona-100k.txt`.
 
-> **Runtime Warning:** Even with an optimal $O(N^2)$ implementation, `usa13509.txt` contains 13,509 points ($\approx 91$ million edge checks) and will take **10–45 seconds** to finish. Do **not** redraw the tour inside your insertion loop—build the complete `Tour` first, then call `draw(g)` once at the end.
+> **Runtime Warning:** `usa13509.txt` contains 13,509 points and `mona-100k.txt` contains 100,000 points. Even with a true $O(N^2)$ algorithm, `usa13509.txt` will take **10–45 seconds** and `mona-100k.txt` will take **several minutes** to finish (if your `insertSmallest` is $O(N^3)$, `mona-100k.txt` will not finish in a reasonable time). Also make sure you build the entire `Tour` before calling `draw(g)` once at the end.
 
 ---
 
@@ -154,9 +147,9 @@ When you are ready to be checked off, call your instructor over to your computer
 * **Phase 1 Verification (`tsp5.txt` & `tsp1000.txt`):**
   * Show that `tsp5.txt` passes the exact point-order and distance checks (`741.58`, `577.79`, and `467.79`).
   * Show the three `DrawingPanel` windows for `tsp1000.txt` (`327,693.76`, `27,868.71`, and `17,265.63`), with `insertSmallest` completing in **under 1 second** (5 seconds maximum).
-* **Phase 2 Visuals (`usa13509.txt` & `mona-1000.txt`):**
-  * Show that you shrank the `fillOval` size in `Point.java` (`2, 2` or `1, 1`) and commented out `add` and `insertNearest` in `TSPClientDriver.java`.
-  * Display the rendered `insertSmallest` tours for both `usa13509.txt` and `mona-1000.txt`.
+* **Phase 2 Visuals (`usa13509.txt` & `mona-100k.txt`):**
+  * Show that you shrank the `fillOval` size in `Point.java` (`1, 1` or `2, 2` at `(int) x, (int) y`) and commented out `add` and `insertNearest` in `TSPClientDriver.java`.
+  * Display the rendered `insertSmallest` tours for both `usa13509.txt` and `mona-100k.txt`.
 * **Verbal Algorithm & Big-O Walkthrough:** Both partners must be able to explain:
-  1. How `insertNearest` and `insertSmallest` work step by step (including how `insertSmallest` computes $\Delta$ in $O(1)$ time per edge).
+  1. How `insertNearest` and `insertSmallest` work step by step.
   2. The Big-O time complexity of inserting a single point and building an entire $N$-point tour for both heuristics.
