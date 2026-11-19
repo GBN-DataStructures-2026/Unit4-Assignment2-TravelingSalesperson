@@ -1,8 +1,6 @@
 # Traveling Salesperson Problem (TSP)
 
-*Originally developed by Robert Sedgewick and Kevin Wayne at Princeton University, and adapted by Baker Franke at the University of Chicago.*
 
----
 
 ## 1. Problem Overview & Perspective
 
