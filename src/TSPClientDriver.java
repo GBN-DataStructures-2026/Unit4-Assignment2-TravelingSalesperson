@@ -37,10 +37,10 @@ public class TSPClientDriver {
          * Checklist before uncommenting:
          * 1. Shrink g.fillOval(..., 5, 5) to 2, 2 (or 1, 1) in Point.java.
          * 2. Comment out Phase 1B above (and keep "add" and "nearest" commented out).
-         * 3. Ignore mona-20k/50k/100k; only run usa13509.txt and mona-1000.txt.
+         * 3. Ignore other files, only run usa13509.txt and mona-100k.txt.
          *
          * runAndDraw("usa13509.txt", "smallest", "Smallest increase heuristic");
-         * runAndDraw("mona-1000.txt", "smallest", "Smallest increase heuristic");
+         * runAndDraw("mona-100k.txt", "smallest", "Smallest increase heuristic");
          */
     }
 
