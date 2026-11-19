@@ -177,9 +177,26 @@ public class TSPClientDriver {
     }
 
     private static Dataset loadDataset(String filename) throws FileNotFoundException {
-        File file = new File("Data Files", filename);
-        if (!file.exists()) {
-            file = new File(filename);
+        File[] candidates = {
+            new File("Data Files", filename),
+            new File("../Data Files", filename),
+            new File(filename),
+            new File("..", filename)
+        };
+
+        File file = null;
+        for (File candidate : candidates) {
+            if (candidate.exists()) {
+                file = candidate;
+                break;
+            }
+        }
+
+        if (file == null) {
+            throw new FileNotFoundException(
+                "Could not find '" + filename + "' in 'Data Files/' or project root. "
+                + "(Current working directory: " + System.getProperty("user.dir") + ")"
+            );
         }
 
         Dataset data = new Dataset();
